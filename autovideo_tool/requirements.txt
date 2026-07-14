@@ -1,3 +1,4 @@
 beautifulsoup4>=4.12,<5
 edge-tts>=7.0,<8
 requests>=2.32,<3
+Pillow>=10.4,<12

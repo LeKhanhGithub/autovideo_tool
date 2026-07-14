@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import difflib
+import hashlib
 import html
 import json
 import re
@@ -18,6 +19,7 @@ from typing import Iterable
 import edge_tts
 import requests
 from bs4 import BeautifulSoup
+from story_visuals import build_cue_storyboard, build_storyboard, render_storyboard
 
 
 DEFAULT_VOICE = "en-US-AvaMultilingualNeural"
@@ -338,7 +340,10 @@ def probe_duration(path: Path) -> float:
 
 def concat_audio(parts: list[Path], output: Path) -> None:
     list_file = output.with_suffix(".concat.txt")
-    rows = [f"file '{p.resolve().as_posix().replace(chr(39), chr(39) + '\\\'' + chr(39))}'" for p in parts]
+    rows = []
+    for part in parts:
+        escaped = part.resolve().as_posix().replace("'", "'\\''")
+        rows.append(f"file '{escaped}'")
     list_file.write_text("\n".join(rows), encoding="utf-8")
     try:
         run([
@@ -531,38 +536,89 @@ def write_srt(cues: Iterable[Cue], output: Path, hold_until_next: bool = True) -
     output.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
 
 
-async def synthesize(text: str, output: Path, voice: str, rate: str, pitch: str) -> list[Word]:
-    chunks = split_for_tts(text)
-    all_words: list[Word] = []
-    with tempfile.TemporaryDirectory(prefix="novel_tts_") as temp:
-        part_files: list[Path] = []
-        cursor = 0.0
-        for index, chunk in enumerate(chunks, 1):
+async def synthesize(
+    text: str,
+    output: Path,
+    voice: str,
+    rate: str,
+    pitch: str,
+    cache_dir: Path | None = None,
+    concurrency: int = 6,
+    chunk_chars: int = 1400,
+) -> list[Word]:
+    chunks = split_for_tts(text, max_chars=chunk_chars)
+    cache_dir = cache_dir or output.parent / "tts_parts"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    semaphore = asyncio.Semaphore(max(1, concurrency))
+
+    async def create_part(index: int, chunk: str) -> tuple[Path, list[Word]]:
+        part = cache_dir / f"part_{index:04}.mp3"
+        timing = cache_dir / f"part_{index:04}.json"
+        chunk_hash = hashlib.sha256(chunk.encode("utf-8")).hexdigest()
+        if part.is_file() and part.stat().st_size > 0 and timing.is_file():
+            saved = json.loads(timing.read_text(encoding="utf-8"))
+            if isinstance(saved, dict) and saved.get("text_sha256") == chunk_hash:
+                print(f"TTS {index}/{len(chunks)} cached", flush=True)
+                return part, [Word(**item) for item in saved["words"]]
+        async with semaphore:
             print(f"TTS {index}/{len(chunks)}", flush=True)
-            part = Path(temp) / f"part_{index:04}.mp3"
             local_words = await render_part(chunk, part, voice, rate, pitch)
-            all_words.extend(
-                Word(w.text, w.start + cursor, w.end + cursor, w.break_after)
-                for w in local_words
+            timing.write_text(
+                json.dumps({
+                    "text_sha256": chunk_hash,
+                    "words": [word.__dict__ for word in local_words],
+                }, ensure_ascii=False),
+                encoding="utf-8",
             )
-            part_files.append(part)
-            cursor += probe_duration(part)
-        concat_audio(part_files, output)
+            return part, local_words
+
+    completed = await asyncio.gather(*(
+        create_part(index, chunk) for index, chunk in enumerate(chunks, 1)
+    ))
+    all_words: list[Word] = []
+    part_files: list[Path] = []
+    cursor = 0.0
+    for part, local_words in completed:
+        all_words.extend(
+            Word(w.text, w.start + cursor, w.end + cursor, w.break_after)
+            for w in local_words
+        )
+        part_files.append(part)
+        cursor += probe_duration(part)
+    concat_audio(part_files, output)
     return all_words
 
 
-def make_video(audio: Path, srt: Path, background: Path | None, output: Path) -> None:
+def make_video(
+    audio: Path,
+    srt: Path,
+    background: Path | None,
+    output: Path,
+    text: str = "",
+    scene_seconds: float = 12.0,
+    video_fps: int = 12,
+) -> None:
     duration = probe_duration(audio)
-    if background:
-        input_args = ["-loop", "1", "-i", str(background)]
-        video_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
-    else:
-        input_args = ["-f", "lavfi", "-i", "color=c=0x111827:s=1920x1080:r=2"]
-        video_filter = "format=yuv420p"
+    storyboard_dir = output.parent / "storyboard"
+    scenes = build_cue_storyboard(
+        read_srt_cues(srt), duration, target_seconds=scene_seconds,
+    )
+    images = render_storyboard(scenes, storyboard_dir, background)
+    concat = storyboard_dir / "storyboard.ffconcat"
+    rows = ["ffconcat version 1.0"]
+    for path, scene in zip(images, scenes):
+        rows.extend([f"file '{path.resolve().as_posix()}'", f"duration {scene.duration:.3f}"])
+    rows.append(f"file '{images[-1].resolve().as_posix()}'")
+    concat.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    video_filter = (
+        f"fps={video_fps},scale=2048:1152:force_original_aspect_ratio=increase,crop=2048:1152,"
+        "zoompan=z='min(zoom+0.00025,1.05)':x='iw/2-(iw/zoom/2)+sin(on/35)*8':"
+        f"y='ih/2-(ih/zoom/2)+cos(on/41)*6':d=1:s=1920x1080:fps={video_fps},format=yuv420p"
+    )
     run([
-        "ffmpeg", "-y", "-v", "error", *input_args, "-i", str(audio), "-i", str(srt),
-        "-map", "0:v:0", "-map", "1:a:0", "-map", "2:0", "-vf", video_filter,
-        "-c:v", "libx264", "-preset", "veryfast", "-tune", "stillimage", "-r", "2",
+        "ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", str(concat),
+        "-i", str(audio), "-i", str(srt), "-map", "0:v:0", "-map", "1:a:0", "-map", "2:0", "-vf", video_filter,
+        "-c:v", "libx264", "-preset", "veryfast", "-r", str(video_fps),
         "-c:a", "aac", "-b:a", "192k", "-c:s", "mov_text", "-metadata:s:s:0",
         "language=eng", "-t", f"{duration:.3f}", "-pix_fmt", "yuv420p", str(output),
     ])
@@ -570,6 +626,22 @@ def make_video(audio: Path, srt: Path, background: Path | None, output: Path) ->
 
 def run(command: list[str]) -> None:
     subprocess.run(command, check=True)
+
+
+def read_srt_cues(path: Path) -> list[Cue]:
+    def parse(value: str) -> float:
+        hours, minutes, tail = value.split(":")
+        seconds, millis = tail.split(",")
+        return int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(millis) / 1000
+
+    cues: list[Cue] = []
+    for block in re.split(r"\r?\n\r?\n+", path.read_text(encoding="utf-8").strip()):
+        lines = block.splitlines()
+        if len(lines) < 3 or " --> " not in lines[1]:
+            continue
+        start, end = lines[1].split(" --> ")
+        cues.append(Cue("\n".join(lines[2:]), parse(start), parse(end)))
+    return cues
 
 
 def parse_args() -> argparse.Namespace:
@@ -588,6 +660,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cue-max-chars", type=int, default=104, help="Maximum characters per semantic cue")
     parser.add_argument("--cue-max-seconds", type=float, default=7.0, help="Maximum spoken seconds per cue")
     parser.add_argument("--subtitle-line-chars", type=int, default=52, help="Wrap subtitles near this line width")
+    parser.add_argument("--scene-seconds", type=float, default=12.0, help="Seconds per dynamic story visual (6-30)")
+    parser.add_argument("--video-fps", type=int, default=12, choices=(8, 12, 24), help="Storyboard motion FPS")
+    parser.add_argument("--tts-concurrency", type=int, default=6, help="Parallel Edge TTS requests (1-10)")
+    parser.add_argument("--tts-chunk-chars", type=int, default=1400, help="Characters per parallel TTS part (800-1800)")
     return parser.parse_args()
 
 
@@ -621,7 +697,15 @@ def main() -> None:
     video = output_dir / "video.mp4"
     source_txt.write_text(text, encoding="utf-8")
 
-    words = asyncio.run(synthesize(text, audio, args.voice, args.rate, args.pitch))
+    if not 1 <= args.tts_concurrency <= 10:
+        raise SystemExit("--tts-concurrency phải nằm trong khoảng 1 đến 10.")
+    if not 800 <= args.tts_chunk_chars <= 1800:
+        raise SystemExit("--tts-chunk-chars phải nằm trong khoảng 800 đến 1800.")
+    words = asyncio.run(synthesize(
+        text, audio, args.voice, args.rate, args.pitch,
+        cache_dir=output_dir / "tts_parts", concurrency=args.tts_concurrency,
+        chunk_chars=args.tts_chunk_chars,
+    ))
     if not words:
         raise SystemExit("TTS không trả về mốc thời gian từ nào.")
     raw_word_timings = output_dir / "raw_word_timings.json"
@@ -647,7 +731,12 @@ def main() -> None:
     background = args.background.expanduser().resolve() if args.background else None
     if background and not background.is_file():
         raise SystemExit(f"Không tìm thấy ảnh nền: {background}")
-    make_video(audio, srt, background, video)
+    if not 6 <= args.scene_seconds <= 30:
+        raise SystemExit("--scene-seconds phải nằm trong khoảng 6 đến 30.")
+    make_video(
+        audio, srt, background, video, text=text,
+        scene_seconds=args.scene_seconds, video_fps=args.video_fps,
+    )
 
     metadata = {
         "title": title,
@@ -656,6 +745,11 @@ def main() -> None:
         "rate": args.rate,
         "pitch": args.pitch,
         "duration_seconds": round(probe_duration(audio), 3),
+        "visuals": {
+            "mode": "storyboard",
+            "scene_seconds": args.scene_seconds,
+            "video_fps": args.video_fps,
+        },
         "subtitle": {
             "cue_max_chars": args.cue_max_chars,
             "cue_max_seconds": args.cue_max_seconds,

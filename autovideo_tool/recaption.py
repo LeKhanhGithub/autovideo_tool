@@ -14,6 +14,8 @@ def main() -> None:
     parser.add_argument("--cue-max-chars", type=int, default=104)
     parser.add_argument("--cue-max-seconds", type=float, default=7.0)
     parser.add_argument("--subtitle-line-chars", type=int, default=52)
+    parser.add_argument("--scene-seconds", type=float, default=12.0)
+    parser.add_argument("--video-fps", type=int, default=12, choices=(8, 12, 24))
     parser.add_argument("--skip-video", action="store_true")
     args = parser.parse_args()
 
@@ -48,7 +50,10 @@ def main() -> None:
 
     if not args.skip_video:
         temporary_video = output_dir / "video.recaptioning.mp4"
-        make_video(audio_path, srt_path, background, temporary_video)
+        make_video(
+            audio_path, srt_path, background, temporary_video,
+            text=source, scene_seconds=args.scene_seconds, video_fps=args.video_fps,
+        )
         temporary_video.replace(video_path)
     print(f"Done: {srt_path}")
 
