@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from novel_video import Cue, Word, align_words_to_source, write_srt
-from story_visuals import build_cue_storyboard, build_storyboard
+from novel_video import Cue, Word, align_words_to_source, synchronize_scene_durations, write_srt
+from story_visuals import build_cue_storyboard, build_source_line_storyboard, build_storyboard
 
 
 class AlignmentTests(unittest.TestCase):
@@ -23,6 +23,14 @@ class AlignmentTests(unittest.TestCase):
         self.assertEqual(len(scenes), 1)
         self.assertEqual(scenes[0].lines, ["First sentence.", "Active sentence.", "Next sentence."])
         self.assertEqual(scenes[0].excerpt, "First sentence. Active sentence. Next sentence.")
+
+    def test_source_storyboard_preserves_txt_lines_verbatim(self) -> None:
+        source = "Donghai No. 1 High School. 5.30 pm.\nRing, ring, ring..."
+        tokens = ["Donghai", "No.", "1", "High", "School.", "5.", "30", "pm.", "Ring,", "ring,", "ring..."]
+        words = [Word(token, index * 0.2, (index + 1) * 0.2) for index, token in enumerate(tokens)]
+        scenes = build_source_line_storyboard(source, words, 3, target_seconds=10)
+        self.assertEqual(scenes[0].lines[0], "Donghai No. 1 High School. 5.30 pm.")
+        self.assertEqual(scenes[0].lines[1], "Ring, ring, ring...")
     def test_ignores_extra_edge_token(self) -> None:
         result = align_words_to_source(
             [Word("Hello", 0.0, 0.3), Word("EXTRA", 0.3, 0.5), Word("world", 0.5, 0.8)],
@@ -46,6 +54,22 @@ class AlignmentTests(unittest.TestCase):
             content = output.read_text(encoding="utf-8")
         self.assertIn("00:00:00,000 --> 00:00:01,500", content)
         self.assertIn("00:00:01,500 --> 00:00:02,000", content)
+
+    def test_scene_transitions_match_absolute_word_starts(self) -> None:
+        source = "First line.\nSecond line.\nThird line."
+        words = [
+            Word("First", 0.125, 0.4), Word("line.", 0.4, 1.0),
+            Word("Second", 1.75, 2.0), Word("line.", 2.0, 2.6),
+            Word("Third", 3.5, 3.8), Word("line.", 3.8, 4.4),
+        ]
+        scenes = build_source_line_storyboard(source, words, 5.0, target_seconds=0.5)
+        synchronize_scene_durations(scenes, 5.0)
+        transitions = [0.0]
+        for scene in scenes[:-1]:
+            transitions.append(transitions[-1] + scene.duration)
+        self.assertEqual(len(transitions), len(scenes))
+        for actual, scene in zip(transitions[1:], scenes[1:]):
+            self.assertAlmostEqual(actual, scene.start, places=6)
 
 
 if __name__ == "__main__":

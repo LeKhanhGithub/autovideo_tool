@@ -276,6 +276,8 @@ python novel_video.py `
   --tts-chunk-chars 1400
 ```
 
+Nếu 95 phần TTS đã được tạo đủ và chỉ muốn ghép/render cục bộ, thêm `--tts-cache-only`. Chế độ này sẽ dừng ngay nếu thiếu cache và tuyệt đối không gọi Edge TTS.
+
 ### 5. Lệnh đã dùng cho Complete Martial Arts Attributes — Chapters 1–20
 
 ```powershell
@@ -352,4 +354,83 @@ ffprobe -v error `
   -show_entries format=duration,size,bit_rate `
   -show_streams `
   "output\complete_martial_arts_attributes_ch01_20\video.mp4"
+```
+
+### 11. Tạo video Split Poster bằng thư mục ảnh truyện
+
+```powershell
+.\.venv\Scripts\python.exe novel_video.py `
+  --text-file "C:\duong-dan\chapter.txt" `
+  --title "Tên truyện - Chapters" `
+  --background "image\image_1.png" `
+  --story-image-dir "C:\duong-dan\thu-muc-anh-truyen" `
+  --visual-layout split `
+  --image-hold-scenes 3 `
+  --output-dir "output\ten-video" `
+  --rate=-7% `
+  --pitch=-2Hz `
+  --cue-max-chars 104 `
+  --cue-max-seconds 7 `
+  --subtitle-line-chars 52 `
+  --scene-seconds 18 `
+  --video-fps 8 `
+  --tts-concurrency 6 `
+  --tts-chunk-chars 1400
+```
+
+### 12. Lệnh đã dùng cho Complete Martial Arts Attributes — Chapters 21–30
+
+```powershell
+.\.venv\Scripts\python.exe novel_video.py `
+  --text-file "text_novel\Complete_Martial_Arts_Attributes\Chapter 21-30.txt" `
+  --title "Complete Martial Arts Attributes - Chapters 21-30" `
+  --background "image\image_1.png" `
+  --story-image-dir "image\complete_martial_arts_attributes" `
+  --visual-layout split `
+  --image-hold-scenes 3 `
+  --output-dir "output\complete_martial_arts_attributes_ch21_30_split" `
+  --rate=-7% `
+  --pitch=-2Hz `
+  --cue-max-chars 104 `
+  --cue-max-seconds 7 `
+  --subtitle-line-chars 52 `
+  --scene-seconds 18 `
+  --video-fps 8 `
+  --tts-concurrency 6 `
+  --tts-chunk-chars 1400
+```
+
+### 13. Dựng lại Split Poster mà không gọi TTS
+
+```powershell
+.\.venv\Scripts\python.exe recaption.py `
+  --output-dir "output\complete_martial_arts_attributes_ch21_30_split" `
+  --background "image\image_1.png" `
+  --story-image-dir "image\complete_martial_arts_attributes" `
+  --visual-layout split `
+  --image-hold-scenes 3 `
+  --scene-seconds 18 `
+  --video-fps 8
+```
+
+### 14. Lệnh cho Global Game: AFK In The Zombie Apocalypse Game — Chapters 1–15
+
+```powershell
+.\.venv\Scripts\python.exe novel_video.py `
+  --text-file "text_novel\Global_Game-AFK_In_The_Zombie_Apocalypse_Game\AFK In The Zombie Apocalypse Game 1-15.txt" `
+  --title "Global Game: AFK In The Zombie Apocalypse Game - Chapters 1-15" `
+  --background "image\image_1.png" `
+  --story-image-dir "image\Global_Game-AFK_In_The_Zombie_Apocalypse_Game" `
+  --visual-layout split `
+  --image-hold-scenes 3 `
+  --output-dir "output\global_game_afk_zombie_apocalypse_ch01_15_split" `
+  --rate=-7% `
+  --pitch=-2Hz `
+  --cue-max-chars 104 `
+  --cue-max-seconds 7 `
+  --subtitle-line-chars 52 `
+  --scene-seconds 18 `
+  --video-fps 8 `
+  --tts-concurrency 6 `
+  --tts-chunk-chars 1400
 ```

@@ -106,7 +106,13 @@ def build_cue_storyboard(
             candidate = str(getattr(cues[index], "text")).replace("\n", " ")
             candidate_end = float(getattr(cues[index], "end"))
             if page and (chars + len(candidate) > max_chars or candidate_end - start > target_seconds):
-                break
+                previous = str(getattr(page[-1], "text")).replace("\n", " ").strip()
+                incomplete = (
+                    not bool(re.search(r"[.!?…][\"'”’)]*$", previous))
+                    or bool(re.search(r"\b(?:No|Mr|Mrs|Ms|Dr|Prof)\.$", previous, re.IGNORECASE))
+                )
+                if not incomplete or chars + len(candidate) > max_chars:
+                    break
             page.append(cues[index])
             chars += len(candidate) + 1
             index += 1
@@ -121,6 +127,58 @@ def build_cue_storyboard(
             heading=heading,
             excerpt=excerpt,
             keywords=_keywords(" ".join(lines)),
+            style="quote_card",
+            lines=lines,
+        ))
+    return scenes
+
+
+def build_source_line_storyboard(
+    source: str,
+    words: list[object],
+    duration: float,
+    target_seconds: float = 18.0,
+    max_chars: int = 560,
+) -> list[StoryScene]:
+    """Build scenes from exact TXT lines while borrowing timing from aligned words."""
+    lexical_words = [word for word in words if re.search(r"\w", str(getattr(word, "text")), re.UNICODE)]
+    paragraphs: list[tuple[str, float, float]] = []
+    cursor = 0
+    for raw_line in source.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        token_count = len(re.findall(r"\w+(?:['’]\w+)*", line, re.UNICODE))
+        if token_count == 0:
+            continue
+        timed = lexical_words[cursor : cursor + token_count]
+        if not timed:
+            break
+        paragraphs.append((line, float(getattr(timed[0], "start")), float(getattr(timed[-1], "end"))))
+        cursor += token_count
+
+    scenes: list[StoryScene] = []
+    index = 0
+    while index < len(paragraphs):
+        start = paragraphs[index][1]
+        page: list[tuple[str, float, float]] = []
+        chars = 0
+        while index < len(paragraphs):
+            paragraph = paragraphs[index]
+            if page and (chars + len(paragraph[0]) > max_chars or paragraph[2] - start > target_seconds):
+                break
+            page.append(paragraph)
+            chars += len(paragraph[0]) + 1
+            index += 1
+        lines = [item[0] for item in page]
+        excerpt = " ".join(lines)
+        chapter = next((line for line in lines if re.match(r"Chapter\s+\d+", line, re.IGNORECASE)), "")
+        scenes.append(StoryScene(
+            start=start,
+            duration=max(0.08, min(duration, page[-1][2]) - start),
+            heading=chapter if chapter else f"Story moment {len(scenes) + 1}",
+            excerpt=excerpt,
+            keywords=_keywords(excerpt),
             style="quote_card",
             lines=lines,
         ))

@@ -19,7 +19,8 @@ from typing import Iterable
 import edge_tts
 import requests
 from bs4 import BeautifulSoup
-from story_visuals import build_cue_storyboard, build_storyboard, render_storyboard
+from image_layouts import render_image_layout
+from story_visuals import build_cue_storyboard, build_source_line_storyboard, build_storyboard, render_storyboard
 
 
 DEFAULT_VOICE = "en-US-AvaMultilingualNeural"
@@ -338,6 +339,51 @@ def probe_duration(path: Path) -> float:
     return float(subprocess.check_output(command, text=True).strip())
 
 
+def mp3_duration(path: Path) -> float:
+    """Read MPEG audio frame durations locally without spawning ffprobe."""
+    data = path.read_bytes()
+    offset = 0
+    if data[:3] == b"ID3" and len(data) >= 10:
+        size = 0
+        for value in data[6:10]:
+            size = (size << 7) | (value & 0x7F)
+        offset = 10 + size
+    bitrate_tables = {
+        (1, 3): [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320],
+        (2, 3): [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+    }
+    sample_tables = {1: [44100, 48000, 32000], 2: [22050, 24000, 16000], 25: [11025, 12000, 8000]}
+    seconds = 0.0
+    frames = 0
+    while offset + 4 <= len(data):
+        header = int.from_bytes(data[offset:offset + 4], "big")
+        if header & 0xFFE00000 != 0xFFE00000:
+            offset += 1
+            continue
+        version_bits = (header >> 19) & 3
+        layer_bits = (header >> 17) & 3
+        bitrate_index = (header >> 12) & 15
+        sample_index = (header >> 10) & 3
+        padding = (header >> 9) & 1
+        version = {3: 1, 2: 2, 0: 25}.get(version_bits)
+        if version is None or layer_bits != 1 or bitrate_index in (0, 15) or sample_index == 3:
+            offset += 1
+            continue
+        table_version = 1 if version == 1 else 2
+        bitrate = bitrate_tables[(table_version, 3)][bitrate_index] * 1000
+        sample_rate = sample_tables[version][sample_index]
+        samples = 1152 if version == 1 else 576
+        frame_size = (144 * bitrate // sample_rate + padding) if version == 1 else (72 * bitrate // sample_rate + padding)
+        if frame_size <= 4 or offset + frame_size > len(data):
+            break
+        seconds += samples / sample_rate
+        frames += 1
+        offset += frame_size
+    if not frames:
+        raise RuntimeError(f"Không đọc được MPEG frames: {path}")
+    return seconds
+
+
 def concat_audio(parts: list[Path], output: Path) -> None:
     list_file = output.with_suffix(".concat.txt")
     rows = []
@@ -545,6 +591,7 @@ async def synthesize(
     cache_dir: Path | None = None,
     concurrency: int = 6,
     chunk_chars: int = 1400,
+    cache_only: bool = False,
 ) -> list[Word]:
     chunks = split_for_tts(text, max_chars=chunk_chars)
     cache_dir = cache_dir or output.parent / "tts_parts"
@@ -560,6 +607,10 @@ async def synthesize(
             if isinstance(saved, dict) and saved.get("text_sha256") == chunk_hash:
                 print(f"TTS {index}/{len(chunks)} cached", flush=True)
                 return part, [Word(**item) for item in saved["words"]]
+        if cache_only:
+            raise RuntimeError(
+                f"--tts-cache-only: thiếu hoặc sai hash cache cho chunk {index}/{len(chunks)}"
+            )
         async with semaphore:
             print(f"TTS {index}/{len(chunks)}", flush=True)
             local_words = await render_part(chunk, part, voice, rate, pitch)
@@ -584,7 +635,7 @@ async def synthesize(
             for w in local_words
         )
         part_files.append(part)
-        cursor += probe_duration(part)
+        cursor += mp3_duration(part)
     concat_audio(part_files, output)
     return all_words
 
@@ -597,13 +648,50 @@ def make_video(
     text: str = "",
     scene_seconds: float = 12.0,
     video_fps: int = 12,
+    words: list[Word] | None = None,
+    story_image_dir: Path | None = None,
+    visual_layout: str = "quote",
+    image_hold_scenes: int = 3,
 ) -> None:
     duration = probe_duration(audio)
     storyboard_dir = output.parent / "storyboard"
-    scenes = build_cue_storyboard(
-        read_srt_cues(srt), duration, target_seconds=scene_seconds,
-    )
-    images = render_storyboard(scenes, storyboard_dir, background)
+    use_split = visual_layout == "split" and story_image_dir is not None and words is not None
+    if use_split:
+        scenes = build_source_line_storyboard(
+            text, words, duration, target_seconds=scene_seconds, max_chars=560,
+        )
+        story_images = sorted(
+            path for path in story_image_dir.iterdir()
+            if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+        )
+        if not story_images:
+            raise RuntimeError(f"Không tìm thấy ảnh truyện trong: {story_image_dir}")
+        storyboard_dir.mkdir(parents=True, exist_ok=True)
+        images = []
+        for index, scene in enumerate(scenes):
+            image_path = storyboard_dir / f"scene_{index:05}.jpg"
+            selected = story_images[(index // max(1, image_hold_scenes)) % len(story_images)]
+            render_image_layout(
+                scene, selected, image_path, "split", index,
+                progress=scene.start / max(duration, 0.001),
+            )
+            images.append(image_path)
+        valid = {path.name for path in images}
+        for stale in storyboard_dir.glob("scene_*.jpg"):
+            if stale.name not in valid:
+                stale.unlink()
+    else:
+        scenes = build_cue_storyboard(
+            read_srt_cues(srt), duration, target_seconds=scene_seconds,
+        )
+        images = render_storyboard(scenes, storyboard_dir, background)
+
+    # The concat demuxer advances by each declared image duration. Scene text
+    # timing can contain natural TTS pauses between pages, so summing only the
+    # spoken spans would make the video stream end before the narration. Keep
+    # every scene visible until the next one begins and let the final scene fill
+    # the remaining audio duration.
+    synchronize_scene_durations(scenes, duration)
     concat = storyboard_dir / "storyboard.ffconcat"
     rows = ["ffconcat version 1.0"]
     for path, scene in zip(images, scenes):
@@ -622,6 +710,14 @@ def make_video(
         "-c:a", "aac", "-b:a", "192k", "-c:s", "mov_text", "-metadata:s:s:0",
         "language=eng", "-t", f"{duration:.3f}", "-pix_fmt", "yuv420p", str(output),
     ])
+
+
+def synchronize_scene_durations(scenes: list[object], duration: float) -> None:
+    """Make concat transitions land on the absolute start of each scene."""
+    for index, scene in enumerate(scenes):
+        timeline_start = 0.0 if index == 0 else float(scene.start)
+        timeline_end = float(scenes[index + 1].start) if index + 1 < len(scenes) else duration
+        scene.duration = max(0.08, timeline_end - timeline_start)
 
 
 def run(command: list[str]) -> None:
@@ -664,6 +760,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--video-fps", type=int, default=12, choices=(8, 12, 24), help="Storyboard motion FPS")
     parser.add_argument("--tts-concurrency", type=int, default=6, help="Parallel Edge TTS requests (1-10)")
     parser.add_argument("--tts-chunk-chars", type=int, default=1400, help="Characters per parallel TTS part (800-1800)")
+    parser.add_argument("--tts-cache-only", action="store_true", help="Use verified TTS cache only; never call Edge TTS")
+    parser.add_argument("--visual-layout", choices=("quote", "split"), default="quote")
+    parser.add_argument("--story-image-dir", type=Path, help="Folder of story images for split layout")
+    parser.add_argument("--image-hold-scenes", type=int, default=3, help="Keep each image for N scenes")
     return parser.parse_args()
 
 
@@ -704,7 +804,7 @@ def main() -> None:
     words = asyncio.run(synthesize(
         text, audio, args.voice, args.rate, args.pitch,
         cache_dir=output_dir / "tts_parts", concurrency=args.tts_concurrency,
-        chunk_chars=args.tts_chunk_chars,
+        chunk_chars=args.tts_chunk_chars, cache_only=args.tts_cache_only,
     ))
     if not words:
         raise SystemExit("TTS không trả về mốc thời gian từ nào.")
@@ -731,11 +831,18 @@ def main() -> None:
     background = args.background.expanduser().resolve() if args.background else None
     if background and not background.is_file():
         raise SystemExit(f"Không tìm thấy ảnh nền: {background}")
+    story_image_dir = args.story_image_dir.expanduser().resolve() if args.story_image_dir else None
+    if args.visual_layout == "split" and (story_image_dir is None or not story_image_dir.is_dir()):
+        raise SystemExit("--visual-layout split yêu cầu --story-image-dir hợp lệ.")
+    if args.image_hold_scenes < 1:
+        raise SystemExit("--image-hold-scenes phải lớn hơn hoặc bằng 1.")
     if not 6 <= args.scene_seconds <= 30:
         raise SystemExit("--scene-seconds phải nằm trong khoảng 6 đến 30.")
     make_video(
         audio, srt, background, video, text=text,
         scene_seconds=args.scene_seconds, video_fps=args.video_fps,
+        words=words, story_image_dir=story_image_dir,
+        visual_layout=args.visual_layout, image_hold_scenes=args.image_hold_scenes,
     )
 
     metadata = {
@@ -749,6 +856,9 @@ def main() -> None:
             "mode": "storyboard",
             "scene_seconds": args.scene_seconds,
             "video_fps": args.video_fps,
+            "layout": args.visual_layout,
+            "story_image_dir": str(story_image_dir) if story_image_dir else None,
+            "image_hold_scenes": args.image_hold_scenes,
         },
         "subtitle": {
             "cue_max_chars": args.cue_max_chars,
