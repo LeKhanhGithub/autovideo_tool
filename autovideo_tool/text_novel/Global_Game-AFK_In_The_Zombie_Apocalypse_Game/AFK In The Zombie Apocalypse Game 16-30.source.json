@@ -1,0 +1,135 @@
+{
+  "source_name": "WebNovel",
+  "source_type": "official_licensed",
+  "book_url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005",
+  "catalog_url": "https://www.webnovel.com/book/21995505805582005/catalog",
+  "book_id": "21995505805582005",
+  "chapter_start": 16,
+  "chapter_end": 30,
+  "chapter_count": 15,
+  "retrieved_at_utc": "2026-07-16T10:19:20.332721+00:00",
+  "text_sha256": "49387172c0dcc90416686e78a0279bea213a4f759d0838cc29a2adcd640716bc",
+  "usage_note": "Fetched from publicly readable official pages; usage remains subject to WebNovel terms.",
+  "chapters": [
+    {
+      "number": 16,
+      "title": "Mutated Zombie",
+      "chapter_id": "59208718956413011",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/mutated-zombie_59208718956413011",
+      "paragraphs": 110,
+      "characters": 8395
+    },
+    {
+      "number": 17,
+      "title": "Upgrade",
+      "chapter_id": "59208718956413040",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/upgrade_59208718956413040",
+      "paragraphs": 83,
+      "characters": 7385
+    },
+    {
+      "number": 18,
+      "title": "Small Stone Hammer",
+      "chapter_id": "59208718973193423",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/small-stone-hammer_59208718973193423",
+      "paragraphs": 89,
+      "characters": 8030
+    },
+    {
+      "number": 19,
+      "title": "Game Mercenary",
+      "chapter_id": "59208719224848534",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/game-mercenary_59208719224848534",
+      "paragraphs": 117,
+      "characters": 8276
+    },
+    {
+      "number": 20,
+      "title": "To Be Continued",
+      "chapter_id": "59208719241628924",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/to-be-continued_59208719241628924",
+      "paragraphs": 106,
+      "characters": 7806
+    },
+    {
+      "number": 21,
+      "title": "Chopping Trees",
+      "chapter_id": "59383098923603086",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/chopping-trees_59383098923603086",
+      "paragraphs": 105,
+      "characters": 8005
+    },
+    {
+      "number": 22,
+      "title": "Intern",
+      "chapter_id": "59383098923603109",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/intern_59383098923603109",
+      "paragraphs": 104,
+      "characters": 7498
+    },
+    {
+      "number": 23,
+      "title": "The Art of Felling",
+      "chapter_id": "59383099208819765",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/the-art-of-felling_59383099208819765",
+      "paragraphs": 95,
+      "characters": 7963
+    },
+    {
+      "number": 24,
+      "title": "Police Officer's Diary",
+      "chapter_id": "59383099192038605",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/police-officer's-diary_59383099192038605",
+      "paragraphs": 94,
+      "characters": 8269
+    },
+    {
+      "number": 25,
+      "title": "The Basement",
+      "chapter_id": "59383099208819809",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/the-basement_59383099208819809",
+      "paragraphs": 124,
+      "characters": 8096
+    },
+    {
+      "number": 26,
+      "title": "Large Skewers of Grilled Meat",
+      "chapter_id": "59383099477255288",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/large-skewers-of-grilled-meat_59383099477255288",
+      "paragraphs": 140,
+      "characters": 8500
+    },
+    {
+      "number": 27,
+      "title": "Mission-collect Wooden Planks",
+      "chapter_id": "59383099477255323",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/mission-collect-wooden-planks_59383099477255323",
+      "paragraphs": 127,
+      "characters": 8258
+    },
+    {
+      "number": 28,
+      "title": "Transporting Goods",
+      "chapter_id": "59383099460474175",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/transporting-goods_59383099460474175",
+      "paragraphs": 99,
+      "characters": 7373
+    },
+    {
+      "number": 29,
+      "title": "Furnace",
+      "chapter_id": "59383099745690843",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/furnace_59383099745690843",
+      "paragraphs": 117,
+      "characters": 8586
+    },
+    {
+      "number": 30,
+      "title": "The Upper Limit",
+      "chapter_id": "59383099728909686",
+      "url": "https://www.webnovel.com/book/global-game-afk-in-the-zombie-apocalypse-game_21995505805582005/the-upper-limit_59383099728909686",
+      "paragraphs": 109,
+      "characters": 7472
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "source_name": "WebNovel",
+  "source_type": "official_licensed",
+  "book_url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605",
+  "catalog_url": "https://www.webnovel.com/book/19402548505225605/catalog",
+  "book_id": "19402548505225605",
+  "chapter_start": 21,
+  "chapter_end": 30,
+  "chapter_count": 10,
+  "retrieved_at_utc": "2026-07-16T10:42:31.310433+00:00",
+  "text_sha256": "52f134b6d45a5362d17d53066d8b8c1c128b667a0c9f9630774313615b6e493f",
+  "usage_note": "Fetched from publicly readable official pages; usage remains subject to WebNovel terms.",
+  "chapters": [
+    {
+      "number": 21,
+      "title": "Pentakill~",
+      "chapter_id": "53237512109349705",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/pentakill~_53237512109349705",
+      "paragraphs": 121,
+      "characters": 8730
+    },
+    {
+      "number": 22,
+      "title": "I Just Want To Stay Alive",
+      "chapter_id": "53237512361014417",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/i-just-want-to-stay-alive_53237512361014417",
+      "paragraphs": 97,
+      "characters": 10409
+    },
+    {
+      "number": 23,
+      "title": "Mountain Villa Gathering",
+      "chapter_id": "53237512646220626",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/mountain-villa-gathering_53237512646220626",
+      "paragraphs": 73,
+      "characters": 8504
+    },
+    {
+      "number": 24,
+      "title": "Zhou Baiyun!",
+      "chapter_id": "53237512914656087",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/zhou-baiyun!_53237512914656087",
+      "paragraphs": 81,
+      "characters": 8934
+    },
+    {
+      "number": 25,
+      "title": "Hunting Ground",
+      "chapter_id": "53237513183091550",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/hunting-ground_53237513183091550",
+      "paragraphs": 69,
+      "characters": 8606
+    },
+    {
+      "number": 26,
+      "title": "Gun Skill",
+      "chapter_id": "53237513183091554",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/gun-skill_53237513183091554",
+      "paragraphs": 90,
+      "characters": 8391
+    },
+    {
+      "number": 27,
+      "title": "The Loud Sound Under The Night Sky",
+      "chapter_id": "53237513451527017",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/the-loud-sound-under-the-night-sky_53237513451527017",
+      "paragraphs": 82,
+      "characters": 7579
+    },
+    {
+      "number": 28,
+      "title": "Martial Warriors Massacre",
+      "chapter_id": "53237513451527019",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/martial-warriors-massacre_53237513451527019",
+      "paragraphs": 97,
+      "characters": 8468
+    },
+    {
+      "number": 29,
+      "title": "One-star Soldier Level Martial Warrior",
+      "chapter_id": "53237513703191724",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/one-star-soldier-level-martial-warrior_53237513703191724",
+      "paragraphs": 97,
+      "characters": 7926
+    },
+    {
+      "number": 30,
+      "title": "After A Great Harvest, How Can You Forget To Destroy...",
+      "chapter_id": "53237513988397939",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/after-a-great-harvest-how-can-you-forget-to-destroy..._53237513988397939",
+      "paragraphs": 89,
+      "characters": 8414
+    }
+  ]
+}

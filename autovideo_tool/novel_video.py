@@ -133,8 +133,10 @@ def split_for_tts(text: str, max_chars: int = 1800) -> list[str]:
 
 MASKED_F_WORD_RE = re.compile(r"(?<![A-Za-z])f\*+c?k(?![A-Za-z])", re.IGNORECASE)
 MASKED_BASTARD_RE = re.compile(r"(?<![A-Za-z])b\*+stard(?![A-Za-z])", re.IGNORECASE)
+MASKED_BITCH_RE = re.compile(r"(?<![A-Za-z])b\*+tch(?![A-Za-z])", re.IGNORECASE)
 MASKED_DAMN_RE = re.compile(r"(?<![A-Za-z])d\*+mn(?![A-Za-z])", re.IGNORECASE)
-QUANTITY_MULTIPLIER_RE = re.compile(r"(?<=\w)\s*\*\s*(?=\d)")
+MASKED_ASS_RE = re.compile(r"(?<![A-Za-z])a\*+s?(?![A-Za-z])", re.IGNORECASE)
+QUANTITY_MULTIPLIER_RE = re.compile(r"(?<=[\w\)])\s*\*\s*(?=\d)")
 TRAILING_FORMAT_ASTERISK_RE = re.compile(r"(?<=\d)\*(?=[.,!?;:\]\)}]|$)")
 MARKDOWN_EMPHASIS_RE = re.compile(r"(?<!\w)\*([^*\r\n]+)\*(?!\w)")
 SPEED_UNIT_RE = re.compile(r"(?<=\d)\s*m\s*/\s*s\b", re.IGNORECASE)
@@ -191,7 +193,15 @@ def prepare_text_for_tts_with_report(text: str) -> tuple[str, dict[str, object]]
         "Restore the intended pronunciation of a masked word.",
     )
     apply_change(
+        MASKED_BITCH_RE, "bitch", "masked_bitch",
+        "Restore the intended pronunciation of a masked word.",
+    )
+    apply_change(
         MASKED_DAMN_RE, "damn", "masked_damn",
+        "Restore the intended pronunciation of a masked word.",
+    )
+    apply_change(
+        MASKED_ASS_RE, "ass", "masked_ass",
         "Restore the intended pronunciation of a masked word.",
     )
     apply_change(
@@ -767,6 +777,7 @@ async def synthesize(
     concurrency: int = 6,
     chunk_chars: int = 1400,
     cache_only: bool = False,
+    force_refresh: bool = False,
 ) -> list[Word]:
     chunks = split_for_tts(prepare_text_for_tts(text), max_chars=chunk_chars)
     cache_dir = cache_dir or output.parent / "tts_parts"
@@ -777,7 +788,7 @@ async def synthesize(
         part = cache_dir / f"part_{index:04}.mp3"
         timing = cache_dir / f"part_{index:04}.json"
         chunk_hash = hashlib.sha256(chunk.encode("utf-8")).hexdigest()
-        if part.is_file() and part.stat().st_size > 0 and timing.is_file():
+        if not force_refresh and part.is_file() and part.stat().st_size > 0 and timing.is_file():
             saved = json.loads(timing.read_text(encoding="utf-8"))
             if isinstance(saved, dict) and saved.get("text_sha256") == chunk_hash:
                 print(f"TTS {index}/{len(chunks)} cached", flush=True)
@@ -922,6 +933,7 @@ def parse_args() -> argparse.Namespace:
     source.add_argument("--url", help="Chapter URL you may access and use")
     parser.add_argument("--confirm-rights", action="store_true", help="Confirm permission/rights for URL content")
     parser.add_argument("--title", help="Override story/chapter title")
+    parser.add_argument("--source-url", help="Record the official source URL when rendering a local TXT")
     parser.add_argument("--background", type=Path, help="Background JPG/PNG")
     parser.add_argument("--output-dir", type=Path, default=Path("output"))
     parser.add_argument("--voice", default=DEFAULT_VOICE)
@@ -936,6 +948,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tts-concurrency", type=int, default=6, help="Parallel Edge TTS requests (1-10)")
     parser.add_argument("--tts-chunk-chars", type=int, default=1400, help="Characters per parallel TTS part (800-1800)")
     parser.add_argument("--tts-cache-only", action="store_true", help="Use verified TTS cache only; never call Edge TTS")
+    parser.add_argument(
+        "--tts-force-refresh",
+        action="store_true",
+        help="Regenerate every TTS part even when a valid cache entry exists",
+    )
     parser.add_argument("--visual-layout", choices=("quote", "split"), default="quote")
     parser.add_argument("--story-image-dir", type=Path, help="Folder of story images for split layout")
     parser.add_argument("--image-hold-scenes", type=int, default=3, help="Keep each image for N scenes")
@@ -947,6 +964,8 @@ def main() -> None:
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise SystemExit("Cần cài ffmpeg và ffprobe trong PATH.")
 
+    source_manifest_data: dict[str, object] | None = None
+    source_url = args.url or args.source_url
     if args.url:
         if not args.confirm_rights:
             raise SystemExit("URL yêu cầu --confirm-rights để xác nhận bạn có quyền sử dụng nội dung.")
@@ -958,6 +977,12 @@ def main() -> None:
             raise SystemExit(f"Không tìm thấy TXT: {path}")
         text = normalize_text(path.read_text(encoding="utf-8-sig"))
         title = args.title or path.stem
+        manifest_path = path.with_suffix(".source.json")
+        if manifest_path.is_file():
+            loaded_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_manifest, dict):
+                source_manifest_data = loaded_manifest
+                source_url = source_url or str(loaded_manifest.get("book_url") or "") or None
 
     if args.sample_chars > 0:
         text = text[: args.sample_chars].rsplit(" ", 1)[0].rstrip() + "…"
@@ -971,7 +996,13 @@ def main() -> None:
     srt = output_dir / "subtitles.en.srt"
     video = output_dir / "video.mp4"
     tts_text_report_path = output_dir / "tts_text_report.json"
+    source_manifest_output = output_dir / "source_manifest.json"
     source_txt.write_text(text, encoding="utf-8")
+    if source_manifest_data is not None:
+        source_manifest_output.write_text(
+            json.dumps(source_manifest_data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
     _speech_text, tts_text_report = prepare_text_for_tts_with_report(text)
     tts_text_report_path.write_text(
         json.dumps(tts_text_report, ensure_ascii=False, indent=2),
@@ -998,10 +1029,13 @@ def main() -> None:
         raise SystemExit("--tts-concurrency phải nằm trong khoảng 1 đến 10.")
     if not 800 <= args.tts_chunk_chars <= 1800:
         raise SystemExit("--tts-chunk-chars phải nằm trong khoảng 800 đến 1800.")
+    if args.tts_cache_only and args.tts_force_refresh:
+        raise SystemExit("Không thể dùng đồng thời --tts-cache-only và --tts-force-refresh.")
     words = asyncio.run(synthesize(
         text, audio, args.voice, args.rate, args.pitch,
         cache_dir=output_dir / "tts_parts", concurrency=args.tts_concurrency,
         chunk_chars=args.tts_chunk_chars, cache_only=args.tts_cache_only,
+        force_refresh=args.tts_force_refresh,
     ))
     if not words:
         raise SystemExit("TTS không trả về mốc thời gian từ nào.")
@@ -1044,7 +1078,7 @@ def main() -> None:
 
     metadata = {
         "title": title,
-        "source_url": args.url,
+        "source_url": source_url,
         "voice": args.voice,
         "rate": args.rate,
         "pitch": args.pitch,
@@ -1069,6 +1103,7 @@ def main() -> None:
             "word_timings": word_timings.name,
             "raw_word_timings": raw_word_timings.name,
             "tts_text_report": tts_text_report_path.name,
+            "source_manifest": source_manifest_output.name if source_manifest_data is not None else None,
             "video": video.name,
         },
     }

@@ -1,0 +1,71 @@
+{
+  "source_name": "WebNovel",
+  "source_type": "official_licensed",
+  "book_url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405",
+  "catalog_url": "https://www.webnovel.com/book/35743828100588405/catalog",
+  "book_id": "35743828100588405",
+  "chapter_start": 26,
+  "chapter_end": 32,
+  "chapter_count": 7,
+  "retrieved_at_utc": "2026-07-16T10:47:06.479855+00:00",
+  "text_sha256": "79354abd7f965afe4c4f31c38441533e510de31ce2914e08cc9b7ad83634b3ab",
+  "usage_note": "Fetched from publicly readable official pages; usage remains subject to WebNovel terms.",
+  "chapters": [
+    {
+      "number": 26,
+      "title": "Zhou Mo, No Longer Obscure",
+      "chapter_id": "96380920205987378",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-26-zhou-mo-no-longer-obscure_96380920205987378",
+      "paragraphs": 75,
+      "characters": 8050
+    },
+    {
+      "number": 27,
+      "title": "\"The Celestial Mandate is with me.",
+      "chapter_id": "96380921011294353",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-27-%22the-celestial-mandate-is-with-me._96380921011294353",
+      "paragraphs": 91,
+      "characters": 8932
+    },
+    {
+      "number": 28,
+      "title": "A Wolf Feigns Sleep to Lure the Enemy, Catching a Turtle in a Jar",
+      "chapter_id": "96380920340212889",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-28-a-wolf-feigns-sleep-to-lure-the-enemy-catching-a-turtle-in-a-jar_96380920340212889",
+      "paragraphs": 83,
+      "characters": 8237
+    },
+    {
+      "number": 29,
+      "title": "Miniature House, Pretty Good.",
+      "chapter_id": "96380921413955341",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-29-miniature-house-pretty-good._96380921413955341",
+      "paragraphs": 76,
+      "characters": 8581
+    },
+    {
+      "number": 30,
+      "title": "\"Quan'Er, You Are the Future Heir of the Chen Family.",
+      "chapter_id": "96380920205987464",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-30-%22quan'er-you-are-the-future-heir-of-the-chen-family._96380920205987464",
+      "paragraphs": 78,
+      "characters": 8050
+    },
+    {
+      "number": 31,
+      "title": "\"See? You're Overthinking Again, Aren't You?",
+      "chapter_id": "96380921413955417",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-31-%22see-you're-overthinking-again-aren't-you_96380921413955417",
+      "paragraphs": 74,
+      "characters": 8329
+    },
+    {
+      "number": 32,
+      "title": "Construction Module Blueprint",
+      "chapter_id": "96380920340212980",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-32-construction-module-blueprint_96380920340212980",
+      "paragraphs": 98,
+      "characters": 8004
+    }
+  ]
+}

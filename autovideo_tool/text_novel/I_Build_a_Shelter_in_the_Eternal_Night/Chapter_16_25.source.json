@@ -1,0 +1,95 @@
+{
+  "source_name": "WebNovel",
+  "source_type": "official_licensed",
+  "book_url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405",
+  "catalog_url": "https://www.webnovel.com/book/35743828100588405/catalog",
+  "book_id": "35743828100588405",
+  "chapter_start": 16,
+  "chapter_end": 25,
+  "chapter_count": 10,
+  "retrieved_at_utc": "2026-07-16T10:46:54.074717+00:00",
+  "text_sha256": "a0e8b331f589fdd5e8fc63ad7756d478c9ab24ce799b1fddaab81a9658e997d9",
+  "usage_note": "Fetched from publicly readable official pages; usage remains subject to WebNovel terms.",
+  "chapters": [
+    {
+      "number": 16,
+      "title": "The Rainy Season Arrives Early",
+      "chapter_id": "96380919534905930",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-16-the-rainy-season-arrives-early_96380919534905930",
+      "paragraphs": 67,
+      "characters": 7942
+    },
+    {
+      "number": 17,
+      "title": "Jiangbei Marketplace",
+      "chapter_id": "96380920608648648",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-17-jiangbei-marketplace_96380920608648648",
+      "paragraphs": 78,
+      "characters": 8080
+    },
+    {
+      "number": 18,
+      "title": "Evernight Descends, Ghost Objects Rampage",
+      "chapter_id": "96380919669116006",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-18-evernight-descends-ghost-objects-rampage_96380919669116006",
+      "paragraphs": 85,
+      "characters": 9541
+    },
+    {
+      "number": 19,
+      "title": "The City Wall",
+      "chapter_id": "96380920742858667",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-19-the-city-wall_96380920742858667",
+      "paragraphs": 85,
+      "characters": 7919
+    },
+    {
+      "number": 20,
+      "title": "Earth Spike",
+      "chapter_id": "96380919669115965",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-20-earth-spike_96380919669115965",
+      "paragraphs": 86,
+      "characters": 8411
+    },
+    {
+      "number": 21,
+      "title": "\"Let's Go Home!",
+      "chapter_id": "96380920877084193",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-21-%22let's-go-home!_96380920877084193",
+      "paragraphs": 78,
+      "characters": 8282
+    },
+    {
+      "number": 22,
+      "title": "Block the Soldiers, Dam the Flood",
+      "chapter_id": "96380920071777262",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-22-block-the-soldiers-dam-the-flood_96380920071777262",
+      "paragraphs": 75,
+      "characters": 8507
+    },
+    {
+      "number": 23,
+      "title": "\"I Got It.",
+      "chapter_id": "96380920742858778",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-23-%22i-got-it._96380920742858778",
+      "paragraphs": 74,
+      "characters": 7664
+    },
+    {
+      "number": 24,
+      "title": "Sentry Tower",
+      "chapter_id": "96380919937551585",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-24-sentry-tower_96380919937551585",
+      "paragraphs": 79,
+      "characters": 8204
+    },
+    {
+      "number": 25,
+      "title": "Arrow Tower Upgraded to Level 3",
+      "chapter_id": "96380920742858776",
+      "url": "https://www.webnovel.com/book/i-build-a-shelter-in-the-eternal-night_35743828100588405/chapter-25-arrow-tower-upgraded-to-level-3_96380920742858776",
+      "paragraphs": 69,
+      "characters": 8254
+    }
+  ]
+}

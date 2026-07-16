@@ -36,13 +36,17 @@ class AlignmentTests(unittest.TestCase):
         self.assertTrue(all(draw.textbbox((0, 0), line, font=font)[2] <= 760 for line in lines))
 
     def test_attribute_counts_are_expanded_for_audio_only(self) -> None:
-        source = "English*9\nDropped Strength*2, Speed * 6.\nBiology*15"
+        source = "English*9\nDropped Strength*2, Speed * 6.\nCrystal (Tier 1)*1\nBiology*15"
         spoken = prepare_text_for_tts(source)
         self.assertEqual(
             spoken,
-            "English times 9\nDropped Strength times 2, Speed times 6.\nBiology times 15",
+            "English times 9\nDropped Strength times 2, Speed times 6.\n"
+            "Crystal (Tier 1) times 1\nBiology times 15",
         )
-        self.assertEqual(source, "English*9\nDropped Strength*2, Speed * 6.\nBiology*15")
+        self.assertEqual(
+            source,
+            "English*9\nDropped Strength*2, Speed * 6.\nCrystal (Tier 1)*1\nBiology*15",
+        )
 
     def test_audio_omits_markdown_and_trailing_format_asterisks(self) -> None:
         source = "Use *emphasis* here.\nDamage*9 bonus points.\nValue 0.2*."
@@ -52,11 +56,11 @@ class AlignmentTests(unittest.TestCase):
         )
 
     def test_masked_words_are_spoken_intelligibly(self) -> None:
-        source = 'What the f**k! That b*stard said D*mn and F*ck.'
+        source = 'What the f**k! That b*stard said D*mn, b*tch, a**, a*s and F*ck.'
         spoken = prepare_text_for_tts(source)
         self.assertEqual(
             spoken,
-            'What the F-word! That bastard said damn and F-word.',
+            'What the F-word! That bastard said damn, bitch, ass, ass and F-word.',
         )
 
     def test_numeric_symbols_and_units_are_expanded_for_audio(self) -> None:

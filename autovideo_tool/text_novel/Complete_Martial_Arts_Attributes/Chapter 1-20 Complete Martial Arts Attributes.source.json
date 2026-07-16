@@ -1,0 +1,175 @@
+{
+  "source_name": "WebNovel",
+  "source_type": "official_licensed",
+  "book_url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605",
+  "catalog_url": "https://www.webnovel.com/book/19402548505225605/catalog",
+  "book_id": "19402548505225605",
+  "chapter_start": 1,
+  "chapter_end": 20,
+  "chapter_count": 20,
+  "retrieved_at_utc": "2026-07-16T10:42:14.201946+00:00",
+  "text_sha256": "da89a4b409ec44516111c64137a202630365095b962364051043c8c88f153a80",
+  "usage_note": "Fetched from publicly readable official pages; usage remains subject to WebNovel terms.",
+  "chapters": [
+    {
+      "number": 1,
+      "title": "This World Isn't Right!",
+      "chapter_id": "52846607254736112",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/this-world-isn't-right!_52846607254736112",
+      "paragraphs": 80,
+      "characters": 8417
+    },
+    {
+      "number": 2,
+      "title": "The Principles Of Peaceful Coexistence With The Otherworld",
+      "chapter_id": "52846607523171571",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/the-principles-of-peaceful-coexistence-with-the-otherworld_52846607523171571",
+      "paragraphs": 86,
+      "characters": 10005
+    },
+    {
+      "number": 3,
+      "title": "Starting My Bugged Life Now!",
+      "chapter_id": "52846607539958822",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/starting-my-bugged-life-now!_52846607539958822",
+      "paragraphs": 91,
+      "characters": 9396
+    },
+    {
+      "number": 4,
+      "title": "I’d Rather Die Than Practice The Ninth Set of Radio Exercises",
+      "chapter_id": "52846607808394284",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/i%E2%80%99d-rather-die-than-practice-the-ninth-set-of-radio-exercises_52846607808394284",
+      "paragraphs": 102,
+      "characters": 8347
+    },
+    {
+      "number": 5,
+      "title": "I, Wang Teng, Am Very Hardworking!",
+      "chapter_id": "52846607808394286",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/i-wang-teng-am-very-hardworking!_52846607808394286",
+      "paragraphs": 98,
+      "characters": 8324
+    },
+    {
+      "number": 6,
+      "title": "I'm Not Incompetent",
+      "chapter_id": "52846608076829747",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/i'm-not-incompetent_52846608076829747",
+      "paragraphs": 84,
+      "characters": 9143
+    },
+    {
+      "number": 7,
+      "title": "Collect The Wool...",
+      "chapter_id": "52846608345265206",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/collect-the-wool..._52846608345265206",
+      "paragraphs": 90,
+      "characters": 8763
+    },
+    {
+      "number": 8,
+      "title": "Wild Rose Pub",
+      "chapter_id": "52846608328477960",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/wild-rose-pub_52846608328477960",
+      "paragraphs": 99,
+      "characters": 10410
+    },
+    {
+      "number": 9,
+      "title": "When Was It Your Turn To Lecture My Friends?",
+      "chapter_id": "52846608596913421",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/when-was-it-your-turn-to-lecture-my-friends_52846608596913421",
+      "paragraphs": 126,
+      "characters": 13432
+    },
+    {
+      "number": 10,
+      "title": "The Gaze Of Love From A Father",
+      "chapter_id": "52846608613700672",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/the-gaze-of-love-from-a-father_52846608613700672",
+      "paragraphs": 92,
+      "characters": 9155
+    },
+    {
+      "number": 11,
+      "title": "Walk The Fatty~",
+      "chapter_id": "52846608882136132",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/walk-the-fatty~_52846608882136132",
+      "paragraphs": 98,
+      "characters": 8804
+    },
+    {
+      "number": 12,
+      "title": "Crazy About Duels",
+      "chapter_id": "52846608865348889",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/crazy-about-duels_52846608865348889",
+      "paragraphs": 104,
+      "characters": 9048
+    },
+    {
+      "number": 13,
+      "title": "Advanced Stage Martial Disciple",
+      "chapter_id": "52846608882136140",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/advanced-stage-martial-disciple_52846608882136140",
+      "paragraphs": 91,
+      "characters": 9980
+    },
+    {
+      "number": 14,
+      "title": "In The Past, You Placed The Prettiest Lady In School Beside Me Side",
+      "chapter_id": "52846609133784352",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/in-the-past-you-placed-the-prettiest-lady-in-school-beside-me-side_52846609133784352",
+      "paragraphs": 82,
+      "characters": 8158
+    },
+    {
+      "number": 15,
+      "title": "Did I Do Something Wrong?",
+      "chapter_id": "52916141433078246",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/did-i-do-something-wrong_52916141433078246",
+      "paragraphs": 77,
+      "characters": 8659
+    },
+    {
+      "number": 16,
+      "title": "Tricks! These Are All Tricks!",
+      "chapter_id": "52916141701513705",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/tricks!-these-are-all-tricks!_52916141701513705",
+      "paragraphs": 89,
+      "characters": 8432
+    },
+    {
+      "number": 17,
+      "title": "Don't Leave After School Ends",
+      "chapter_id": "52916141986736335",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/don't-leave-after-school-ends_52916141986736335",
+      "paragraphs": 83,
+      "characters": 8666
+    },
+    {
+      "number": 18,
+      "title": "Weak! Too Weak!",
+      "chapter_id": "52916141969949169",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/weak!-too-weak!_52916141969949169",
+      "paragraphs": 99,
+      "characters": 9165
+    },
+    {
+      "number": 19,
+      "title": "Gunshot",
+      "chapter_id": "52922446461846472",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/gunshot_52922446461846472",
+      "paragraphs": 97,
+      "characters": 9196
+    },
+    {
+      "number": 20,
+      "title": "So, I Can Only Kill Them!",
+      "chapter_id": "52925715988934495",
+      "url": "https://www.webnovel.com/book/complete-martial-arts-attributes_19402548505225605/so-i-can-only-kill-them!_52925715988934495",
+      "paragraphs": 131,
+      "characters": 12349
+    }
+  ]
+}
