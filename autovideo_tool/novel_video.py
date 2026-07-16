@@ -12,6 +12,8 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import unicodedata
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -127,6 +129,179 @@ def split_for_tts(text: str, max_chars: int = 1800) -> list[str]:
     if current:
         chunks.append(current)
     return chunks
+
+
+MASKED_F_WORD_RE = re.compile(r"(?<![A-Za-z])f\*+c?k(?![A-Za-z])", re.IGNORECASE)
+MASKED_BASTARD_RE = re.compile(r"(?<![A-Za-z])b\*+stard(?![A-Za-z])", re.IGNORECASE)
+MASKED_DAMN_RE = re.compile(r"(?<![A-Za-z])d\*+mn(?![A-Za-z])", re.IGNORECASE)
+QUANTITY_MULTIPLIER_RE = re.compile(r"(?<=\w)\s*\*\s*(?=\d)")
+TRAILING_FORMAT_ASTERISK_RE = re.compile(r"(?<=\d)\*(?=[.,!?;:\]\)}]|$)")
+MARKDOWN_EMPHASIS_RE = re.compile(r"(?<!\w)\*([^*\r\n]+)\*(?!\w)")
+SPEED_UNIT_RE = re.compile(r"(?<=\d)\s*m\s*/\s*s\b", re.IGNORECASE)
+ALWAYS_ON_RE = re.compile(r"\b24\s*/\s*7\b")
+NUMERIC_RATIO_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)\b")
+GRADE_PLUS_RE = re.compile(r"(?<=[A-Za-z])\+-?(?=level\b)", re.IGNORECASE)
+PLUS_NUMBER_RE = re.compile(r"(?<![\w+])\+\s*(?=\d)")
+PERCENT_RE = re.compile(r"(?<=\d)\s*%(?=\W|$)")
+KAOMOJI_RE = re.compile(
+    r"[ \t]*(?:[oO]?\([^()\r\n]*(?:〒|╯|□|╰|●|ˇ)[^()\r\n]*\)[oO]?)"
+)
+DIAGRAM_SYMBOL_RE = re.compile(r"[ \t]*\(\s*⊥\s*\)")
+DECORATIVE_SYMBOL_RE = re.compile(r"[〒╯□╰●⊥ˇ]")
+SPEECH_BRACKET_RE = re.compile(r"[\[\]「」〈〉]")
+TILDE_RE = re.compile(r"~+")
+SEPARATOR_LINE_RE = re.compile(r"(?m)^[ \t]*-+[ \t]*$")
+
+SAFE_SPEECH_PUNCTUATION = {"—", "–", "…", "’", "‘", "“", "”"}
+REVIEW_ASCII_SYMBOLS = set("*[]/\\+%~#@$&=_^<>|{}")
+
+
+def prepare_text_for_tts_with_report(text: str) -> tuple[str, dict[str, object]]:
+    """Create speech-only text and an audit trail without mutating display text."""
+    prepared = text
+    changes: dict[str, dict[str, object]] = {}
+
+    def apply_change(pattern: re.Pattern[str], replacement, kind: str, description: str) -> None:
+        nonlocal prepared
+
+        def replace(match: re.Match[str]) -> str:
+            spoken = replacement(match) if callable(replacement) else replacement
+            if spoken == match.group():
+                return spoken
+            item = changes.setdefault(
+                kind,
+                {"kind": kind, "description": description, "count": 0, "examples": []},
+            )
+            item["count"] = int(item["count"]) + 1
+            examples = item["examples"]
+            if isinstance(examples, list) and len(examples) < 5:
+                example = {"source": match.group(), "speech": spoken}
+                if example not in examples:
+                    examples.append(example)
+            return spoken
+
+        prepared = pattern.sub(replace, prepared)
+
+    apply_change(
+        MASKED_F_WORD_RE, "F-word", "masked_f_word",
+        "Read masked f-words intelligibly without speaking asterisks.",
+    )
+    apply_change(
+        MASKED_BASTARD_RE, "bastard", "masked_bastard",
+        "Restore the intended pronunciation of a masked word.",
+    )
+    apply_change(
+        MASKED_DAMN_RE, "damn", "masked_damn",
+        "Restore the intended pronunciation of a masked word.",
+    )
+    apply_change(
+        QUANTITY_MULTIPLIER_RE, " times ", "quantity_multiplier",
+        "Read resource and attribute counts such as wood*2 as wood times 2.",
+    )
+    apply_change(
+        TRAILING_FORMAT_ASTERISK_RE, "", "trailing_format_asterisk",
+        "Drop a trailing formatting asterisk that adds no spoken meaning.",
+    )
+    apply_change(
+        MARKDOWN_EMPHASIS_RE, lambda match: match.group(1), "markdown_emphasis",
+        "Keep emphasized words but omit Markdown asterisks from speech.",
+    )
+    apply_change(
+        KAOMOJI_RE, "", "kaomoji",
+        "Omit decorative emoticons that TTS cannot pronounce meaningfully.",
+    )
+    apply_change(
+        DIAGRAM_SYMBOL_RE, "", "diagram_symbol",
+        "Omit a visual-only diagram symbol when the surrounding words already explain it.",
+    )
+    apply_change(
+        DECORATIVE_SYMBOL_RE, "", "decorative_symbol",
+        "Omit isolated decorative glyphs from speech.",
+    )
+    apply_change(
+        SPEED_UNIT_RE, " meters per second", "speed_unit",
+        "Expand m/s so the unit is pronounced correctly.",
+    )
+    apply_change(
+        ALWAYS_ON_RE, "24 7", "always_on",
+        "Read 24/7 as the conventional phrase twenty-four seven.",
+    )
+    apply_change(
+        NUMERIC_RATIO_RE, lambda match: f"{match.group(1)} out of {match.group(2)}", "numeric_ratio",
+        "Read numeric status ratios as current value out of maximum value.",
+    )
+    apply_change(
+        GRADE_PLUS_RE, " plus ", "grade_plus",
+        "Read grades such as A+-level as A plus level.",
+    )
+    apply_change(
+        PLUS_NUMBER_RE, "plus ", "plus_number",
+        "Pronounce a leading plus sign in stat and experience gains.",
+    )
+    apply_change(
+        PERCENT_RE, " percent", "percentage",
+        "Expand percent signs for reliable pronunciation.",
+    )
+    apply_change(
+        SPEECH_BRACKET_RE, "", "display_brackets",
+        "Omit visual panel and stage-direction brackets while keeping their contents.",
+    )
+    apply_change(
+        TILDE_RE, "", "decorative_tilde",
+        "Omit decorative tildes used only to elongate tone in display text.",
+    )
+    apply_change(
+        SEPARATOR_LINE_RE, "", "separator_line",
+        "Omit standalone hyphen separator lines from speech.",
+    )
+    prepared = re.sub(r"[ \t]{2,}", " ", prepared)
+
+    unresolved = Counter()
+    for character in prepared:
+        category = unicodedata.category(character)
+        if character in REVIEW_ASCII_SYMBOLS:
+            unresolved[character] += 1
+        elif ord(character) > 127 and category[0] in {"S", "C"}:
+            unresolved[character] += 1
+        elif ord(character) > 127 and category[0] == "P" and character not in SAFE_SPEECH_PUNCTUATION:
+            unresolved[character] += 1
+
+    needs_review = [
+        {
+            "character": character,
+            "codepoint": f"U+{ord(character):04X}",
+            "name": unicodedata.name(character, "UNKNOWN"),
+            "count": count,
+        }
+        for character, count in sorted(unresolved.items(), key=lambda item: (-item[1], ord(item[0])))
+    ]
+    kept_punctuation = [
+        {
+            "character": character,
+            "codepoint": f"U+{ord(character):04X}",
+            "name": unicodedata.name(character, "UNKNOWN"),
+            "count": text.count(character),
+        }
+        for character in sorted(SAFE_SPEECH_PUNCTUATION, key=ord)
+        if character in text
+    ]
+    report: dict[str, object] = {
+        "source_characters": len(text),
+        "speech_characters": len(prepared),
+        "source_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "speech_sha256": hashlib.sha256(prepared.encode("utf-8")).hexdigest(),
+        "display_text_changed": False,
+        "changes": list(changes.values()),
+        "kept_punctuation": kept_punctuation,
+        "needs_review": needs_review,
+    }
+    return prepared, report
+
+
+def prepare_text_for_tts(text: str) -> str:
+    """Return speech-only text while preserving the caller's source string."""
+    prepared, _report = prepare_text_for_tts_with_report(text)
+    return prepared
 
 
 def restore_source_tokens(words: list[Word], source: str) -> list[Word]:
@@ -593,7 +768,7 @@ async def synthesize(
     chunk_chars: int = 1400,
     cache_only: bool = False,
 ) -> list[Word]:
-    chunks = split_for_tts(text, max_chars=chunk_chars)
+    chunks = split_for_tts(prepare_text_for_tts(text), max_chars=chunk_chars)
     cache_dir = cache_dir or output.parent / "tts_parts"
     cache_dir.mkdir(parents=True, exist_ok=True)
     semaphore = asyncio.Semaphore(max(1, concurrency))
@@ -795,7 +970,29 @@ def main() -> None:
     audio = output_dir / "narration_ava.mp3"
     srt = output_dir / "subtitles.en.srt"
     video = output_dir / "video.mp4"
+    tts_text_report_path = output_dir / "tts_text_report.json"
     source_txt.write_text(text, encoding="utf-8")
+    _speech_text, tts_text_report = prepare_text_for_tts_with_report(text)
+    tts_text_report_path.write_text(
+        json.dumps(tts_text_report, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    changed_count = sum(int(item["count"]) for item in tts_text_report["changes"])
+    needs_review = tts_text_report["needs_review"]
+    print(
+        f"TTS text review: {changed_count} audio-only changes, "
+        f"{len(needs_review)} unresolved character types -> {tts_text_report_path}",
+        flush=True,
+    )
+    if needs_review:
+        print(
+            "TTS text warning: "
+            + ", ".join(
+                f"{item['codepoint']} {item['character']!r} x{item['count']}"
+                for item in needs_review
+            ),
+            flush=True,
+        )
 
     if not 1 <= args.tts_concurrency <= 10:
         raise SystemExit("--tts-concurrency phải nằm trong khoảng 1 đến 10.")
@@ -871,6 +1068,7 @@ def main() -> None:
             "srt": srt.name,
             "word_timings": word_timings.name,
             "raw_word_timings": raw_word_timings.name,
+            "tts_text_report": tts_text_report_path.name,
             "video": video.name,
         },
     }

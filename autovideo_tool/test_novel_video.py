@@ -4,11 +4,83 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from novel_video import Cue, Word, align_words_to_source, synchronize_scene_durations, write_srt
+from PIL import Image, ImageDraw
+
+from image_layouts import _display_heading, _fit_split_heading
+from novel_video import (
+    Cue,
+    Word,
+    align_words_to_source,
+    prepare_text_for_tts,
+    prepare_text_for_tts_with_report,
+    synchronize_scene_durations,
+    write_srt,
+)
 from story_visuals import build_cue_storyboard, build_source_line_storyboard, build_storyboard
 
 
 class AlignmentTests(unittest.TestCase):
+    def test_split_heading_deduplicates_chapter_and_stays_in_reserved_width(self) -> None:
+        heading = (
+            'Chapter 35: Chapter 35: "Farming Glorifies the Clan, '
+            'Pig-Raising Honors the Ancestors.'
+        )
+        self.assertEqual(
+            _display_heading(heading),
+            "Chapter 35: Farming Glorifies the Clan, Pig-Raising Honors the Ancestors.",
+        )
+        draw = ImageDraw.Draw(Image.new("RGB", (1920, 1080)))
+        lines, font, _line_height = _fit_split_heading(draw, heading)
+        self.assertLessEqual(len(lines), 2)
+        self.assertTrue(lines)
+        self.assertTrue(all(draw.textbbox((0, 0), line, font=font)[2] <= 760 for line in lines))
+
+    def test_attribute_counts_are_expanded_for_audio_only(self) -> None:
+        source = "English*9\nDropped Strength*2, Speed * 6.\nBiology*15"
+        spoken = prepare_text_for_tts(source)
+        self.assertEqual(
+            spoken,
+            "English times 9\nDropped Strength times 2, Speed times 6.\nBiology times 15",
+        )
+        self.assertEqual(source, "English*9\nDropped Strength*2, Speed * 6.\nBiology*15")
+
+    def test_audio_omits_markdown_and_trailing_format_asterisks(self) -> None:
+        source = "Use *emphasis* here.\nDamage*9 bonus points.\nValue 0.2*."
+        self.assertEqual(
+            prepare_text_for_tts(source),
+            "Use emphasis here.\nDamage times 9 bonus points.\nValue 0.2.",
+        )
+
+    def test_masked_words_are_spoken_intelligibly(self) -> None:
+        source = 'What the f**k! That b*stard said D*mn and F*ck.'
+        spoken = prepare_text_for_tts(source)
+        self.assertEqual(
+            spoken,
+            'What the F-word! That bastard said damn and F-word.',
+        )
+
+    def test_numeric_symbols_and_units_are_expanded_for_audio(self) -> None:
+        source = "HP: 10/300. Online 24/7 at 12.7m/s. XP +20. A+-level. Chance 39.5%."
+        self.assertEqual(
+            prepare_text_for_tts(source),
+            "HP: 10 out of 300. Online 24 7 at 12.7 meters per second. "
+            "XP plus 20. A plus level. Chance 39.5 percent.",
+        )
+
+    def test_display_brackets_and_visual_only_symbols_are_omitted_from_audio(self) -> None:
+        source = "[Farmland upgraded.] 「One hour later.」 An inverted T (⊥). o(╯□╰)o…"
+        spoken, report = prepare_text_for_tts_with_report(source)
+        self.assertEqual(spoken, "Farmland upgraded. One hour later. An inverted T.…")
+        self.assertEqual(source, "[Farmland upgraded.] 「One hour later.」 An inverted T (⊥). o(╯□╰)o…")
+        self.assertFalse(report["display_text_changed"])
+        self.assertEqual(report["needs_review"], [])
+
+    def test_unknown_symbol_is_flagged_for_review_without_changing_source(self) -> None:
+        source = "Reward: 3€."
+        spoken, report = prepare_text_for_tts_with_report(source)
+        self.assertEqual(spoken, source)
+        self.assertEqual(report["needs_review"][0]["character"], "€")
+
     def test_storyboard_covers_duration_and_uses_story_text(self) -> None:
         text = "The dragon entered the frozen castle. Mira raised her silver sword. The gate collapsed behind them."
         scenes = build_storyboard(text, 31, scene_seconds=10)

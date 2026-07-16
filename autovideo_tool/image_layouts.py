@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
@@ -9,6 +10,63 @@ from story_visuals import StoryScene, _font, _wrap
 
 
 ACCENTS = [(54, 211, 153, 255), (96, 165, 250, 255), (244, 114, 182, 255)]
+DUPLICATE_CHAPTER_HEADING_RE = re.compile(
+    r"^(Chapter\s+(?P<number>\d+)\s*:)\s*Chapter\s+(?P=number)\s*:\s*",
+    re.IGNORECASE,
+)
+
+
+def _display_heading(heading: str) -> str:
+    """Clean a derived header without changing source text shown in the quote."""
+    cleaned = DUPLICATE_CHAPTER_HEADING_RE.sub(
+        lambda match: f"{match.group(1)} ",
+        heading.strip(),
+    )
+    chapter = re.match(r"^(Chapter\s+\d+\s*:)\s*(.*)$", cleaned, re.IGNORECASE)
+    if chapter:
+        title = chapter.group(2).strip().strip('"“”')
+        return f"{chapter.group(1)} {title}".rstrip()
+    return cleaned
+
+
+def _ellipsize(draw: ImageDraw.ImageDraw, text: str, font, max_width: int) -> str:
+    suffix = "…"
+    candidate = text.strip()
+    while candidate and draw.textbbox((0, 0), candidate + suffix, font=font)[2] > max_width:
+        candidate = candidate[:-1].rstrip()
+    return candidate + suffix if candidate else suffix
+
+
+def _fit_split_heading(
+    draw: ImageDraw.ImageDraw,
+    heading: str,
+    max_width: int = 760,
+) -> tuple[list[str], object, int]:
+    """Fit a split-layout heading into at most two lines beside the icon."""
+    text = _display_heading(heading).upper()
+    for size in (31, 29, 27, 25, 23, 21, 20):
+        font = _font(size, True)
+        lines = _wrap(draw, text, font, max_width)
+        if len(lines) <= 2 and all(
+            draw.textbbox((0, 0), line, font=font)[2] <= max_width for line in lines
+        ):
+            return lines, font, size + 7
+
+    font = _font(20, True)
+    wrapped = _wrap(draw, text, font, max_width)
+    first = _ellipsize(draw, wrapped[0], font, max_width)
+    if len(wrapped) == 1:
+        return [first], font, 27
+    second = _ellipsize(draw, " ".join(wrapped[1:]), font, max_width)
+    return [first, second], font, 27
+
+
+def _draw_split_heading(draw: ImageDraw.ImageDraw, heading: str) -> None:
+    lines, font, line_height = _fit_split_heading(draw, heading)
+    y = 155 if len(lines) == 1 else 138
+    for line in lines:
+        draw.text((875, y), line, font=font, fill=(245, 248, 255, 255))
+        y += line_height
 
 
 def _cover(source: Image.Image, size: tuple[int, int], focus_x: float = 0.5) -> Image.Image:
@@ -147,7 +205,7 @@ def render_image_layout(
             draw.ellipse((dot[0]-radius, dot[1]-radius, dot[0]+radius, dot[1]+radius), fill=accent)
         draw.rounded_rectangle((865, 78, 1075, 122), 20, fill=accent, outline=(245, 248, 255, 180), width=2)
         draw.text((970, 100), f"SCENE {index + 1:02}", font=_font(20, True), fill=(5, 11, 24, 255), anchor="mm")
-        draw.text((875, 155), scene.heading.upper(), font=_font(31, True), fill=(245, 248, 255, 255))
+        _draw_split_heading(draw, scene.heading)
         _icon(draw, (1730, 150), accent, seed % 3)
         draw.rounded_rectangle((845, 250, 1835, 905), 30, fill=(9, 18, 36, 95), outline=(*accent[:3], 105), width=2)
         text_color = tuple(min(255, int(235 + channel * 0.08)) for channel in accent[:3]) + (255,)
